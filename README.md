@@ -1,2 +1,2 @@
 # blind-fanta-server
-back end of blind-fanta-client
+Back End of blind-fanta-client
