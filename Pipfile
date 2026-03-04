@@ -8,6 +8,7 @@ fastapi = "*"
 uvicorn = "*"
 sqlmodel = "*"
 pydantic-settings = "*"
+email-validator = "*"
 
 [dev-packages]
 
