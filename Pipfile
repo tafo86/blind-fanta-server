@@ -5,10 +5,10 @@ name = "pypi"
 
 [packages]
 fastapi = "*"
-uvicorn = "*"
 sqlmodel = "*"
 pydantic-settings = "*"
 email-validator = "*"
+uvicorn = {extras = ["standard"], version = "*"}
 
 [dev-packages]
 

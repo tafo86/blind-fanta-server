@@ -150,7 +150,7 @@ async def brodcast(
             full_name=player.full_name,
             birth_date=player.birth_date,
             role=player.role,
-            img=player.img._url.path,
+            img=player.img._url.path, # type: ignore
             real_team=player.real_team,
         )
 
