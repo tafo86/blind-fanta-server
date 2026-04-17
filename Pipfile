@@ -9,6 +9,8 @@ sqlmodel = "*"
 pydantic-settings = "*"
 email-validator = "*"
 uvicorn = {extras = ["standard"], version = "*"}
+pyjwt = "*"
+cryptography = "*"
 
 [dev-packages]
 

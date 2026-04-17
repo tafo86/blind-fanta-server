@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
+from routers.auth import verify_auth0_token
 from services import BiddingService
 from dependencies import get_bidding_service
 from models import Player, Team
@@ -12,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post("", dependencies=[Depends(verify_auth0_token)], status_code=status.HTTP_201_CREATED)
 async def team(
     team: Team,
     service: BiddingService = Depends(get_bidding_service),
@@ -20,7 +21,7 @@ async def team(
     return service.add_team(team)
 
 
-@router.get("/{team_id}/players", response_model=List[Player])
+@router.get("/{team_id}/players", dependencies=[Depends(verify_auth0_token)],response_model=List[Player])
 async def get_team_players(
     team_id: int,
     service: BiddingService = Depends(get_bidding_service)
@@ -32,7 +33,7 @@ async def get_team_players(
     players = service.get_team_players(team_id)
     return players
 
-@router.get("/user/{user_id}", response_model=Team)
+@router.get("/user/{user_id}", dependencies=[Depends(verify_auth0_token)],response_model=Team)
 async def get_team_by_user(
     user_id: int,
     service: BiddingService = Depends(get_bidding_service)

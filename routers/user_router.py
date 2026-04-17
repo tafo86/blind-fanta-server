@@ -2,6 +2,7 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, status
 import config
 from models import User
+from routers.auth import verify_auth0_token
 from services import BiddingService
 from dependencies import get_bidding_service
 
@@ -16,7 +17,7 @@ router = APIRouter(
 def get_settings():
     return config.Settings()
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", dependencies=[Depends(verify_auth0_token)], status_code=status.HTTP_201_CREATED)
 async def user_register(
     user: User,
     # settings: Annotated[config.Settings, Depends(get_settings)],
@@ -34,13 +35,13 @@ async def user_register(
     
     return service.register_user(user)
 
-@router.get("/{auth_id}") # standardized URL to /user/1
+@router.get("/{auth0}", dependencies=[Depends(verify_auth0_token)])
 async def get_user(
-    auth_id: str, 
+    auth0: str, 
     service: BiddingService = Depends(get_bidding_service)
 ):
     # Fixed: The original code was missing 'return'
-    return service.get_user_by_auth_id(auth_id)
+    return service.get_user_by_auth_id(auth0)
 
 @router.delete("/{user_id}") # standardized URL to /user/1
 async def delete_user(

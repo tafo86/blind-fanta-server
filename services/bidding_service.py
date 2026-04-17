@@ -146,7 +146,7 @@ class BiddingService:
                 status_code=409, detail="User with this email already exists."
             )
 
-    def get_user_by_auth_id(self, auth_id: int) -> User:
+    def get_user_by_auth_id(self, auth_id: str) -> User:
         user = self.user_repo.get_user_by_auth_id(auth_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

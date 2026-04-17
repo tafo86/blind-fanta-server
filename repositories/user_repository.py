@@ -37,7 +37,7 @@ class UserRepository:
         else:
             return user
 
-    def get_user_by_auth_id(self, auth_id: int) -> Optional[User]:
+    def get_user_by_auth_id(self, auth_id: str) -> Optional[User]:
         # 'session.get' is the most efficient way to fetch by Primary Key
         query = select(User).where(User.auth0_id == auth_id)
         return self.session.exec(query).first()

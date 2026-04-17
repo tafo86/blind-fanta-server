@@ -6,21 +6,14 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Request
 from collections import namedtuple
 
 from pydantic import BaseModel
+from starlette import status
 
 from dependencies import get_bidding_service
+from routers.auth import verify_admin_role, verify_ws_token
 from services import BiddingService
 
 Connection = namedtuple("Connection", ["user_id", "port"])
 
-
-class PlayerInfo(BaseModel):
-    id: int
-    name: str
-    full_name: str
-    birth_date: str
-    role: str
-    img: str
-    real_team: str
 
 
 class StartingOffer(BaseModel):
@@ -41,18 +34,29 @@ class ConnectionManager:
         # Store connections using the user_id as the key
         self.active_connections: Dict[int, Dict[int, WebSocket]] = {}
 
+#TODO mettere a posto connessione ws con token
+
     async def connect(self, user_id: int, websocket: WebSocket):
         """Accepts the connection and adds it to the active pool."""
-        await websocket.accept()
-        if websocket.client is not None:
-            port = websocket.client.port
-            if user_id in self.active_connections:
-                self.active_connections[user_id][port] = websocket
-            else:
-                self.active_connections[user_id] = {port: websocket}
-            print(
-                f"Client {user_id} connected on port {port}. Total active: {self.get_active_connection_count()}"
-            )
+        try:
+        # 1. Manually verify the token here using your PyJWKClient logic
+        # (You will need to slightly adapt your verify function to accept a raw string)
+        
+        # 2. If it passes, accept the connection!
+            await websocket.accept()
+    
+            if websocket.client is not None:
+                port = websocket.client.port
+                if user_id in self.active_connections:
+                    self.active_connections[user_id][port] = websocket
+                else:
+                    self.active_connections[user_id] = {port: websocket}
+                print(
+                    f"Client {user_id} connected on port {port}. Total active: {self.get_active_connection_count()}"
+                )
+        except Exception:
+        # If the token is invalid, close the door before they even get in
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
 
     def disconnect(self, connection: Connection):
         """Removes the connection from the active pool."""
@@ -98,7 +102,7 @@ manager = ConnectionManager()
 
 
 # --- 3. WebSocket Endpoint Refactored ---
-@router.websocket("/ws/{user_id}")
+@router.websocket("/ws/{user_id}", dependencies=[Depends(verify_ws_token)])
 async def websocket_endpoint(
     websocket: WebSocket,
     user_id: int,
@@ -131,7 +135,7 @@ async def websocket_endpoint(
             print(f"An unexpected error occurred: {e}")
 
 
-@router.post("/notify")
+@router.post("/notify", dependencies=[Depends(verify_admin_role)])
 async def brodcast(
     request: Request, service: BiddingService = Depends(get_bidding_service)
 ):
@@ -144,20 +148,8 @@ async def brodcast(
     player = service.get_player(player_id)
 
     if player.purchase_cost is None:
-        player_info = PlayerInfo(
-            id=player.id,
-            name=player.name,
-            full_name=player.full_name,
-            birth_date=player.birth_date,
-            role=player.role,
-            img=player.img._url.path, # type: ignore
-            real_team=player.real_team,
-        )
 
-        # 3. Use the string value for your logic
-        player_msg = json.dumps({"player": player_info.model_dump(mode='json')})
-        await manager.broadcast(player_msg)
-
+        await manager.broadcast(player.model_dump_json())
         return {"eligible": True, "message": f"Successfully notified: {player.name}"}
 
     else:
