@@ -12,7 +12,7 @@ Connection = namedtuple('Connection', ['user_id','web_socket'])
 
 app = FastAPI()
 
-origins = ["http://localhost:5173", "https://your-vercel-app-url.vercel.app"]
+origins = ["http://localhost:5173", "https://blind-fanta-client.vercel.app"]
 
 
 app.add_middleware(
